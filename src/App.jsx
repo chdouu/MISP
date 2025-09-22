@@ -1,4 +1,6 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+// 匯入 React hooks 與狀態管理工具
+import { useEffect, useMemo, useState } from 'react';
+// 匯入 Ant Design 相關 UI 元件
 import {
   Alert,
   Card,
@@ -14,12 +16,14 @@ import {
   Tag,
   Typography,
 } from 'antd';
+// 匯入儀表板指示圖示
 import {
   BulbOutlined,
   CloudOutlined,
   ClockCircleOutlined,
   FireOutlined,
 } from '@ant-design/icons';
+// 匯入 Recharts 圖表繪製元件
 import {
   CartesianGrid,
   Legend,
@@ -30,14 +34,19 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+// 匯入日期處理函式庫 dayjs
 import dayjs from 'dayjs';
+// 連線 Firebase 即時資料庫所需查詢方法
 import { limitToLast, onValue, orderByChild, query, ref } from 'firebase/database';
+// 匯入封裝好的資料庫實例
 import { database } from './firebase';
+// 匯入本頁面樣式
 import './App.css';
 
 const { RangePicker } = DatePicker;
 const { Header, Content } = Layout;
 
+// 預設時間範圍選項供使用者快速切換
 const rangeOptions = [
   { label: '1小時', value: '1h' },
   { label: '24小時', value: '24h' },
@@ -47,6 +56,7 @@ const rangeOptions = [
   { label: '自訂', value: 'custom' },
 ];
 
+// 共用指標格式化函式，用來顯示不同單位與精度
 const formatMetric = (value, unit, precision = 1) => {
   if (value === null || value === undefined) {
     return '--';
@@ -62,13 +72,16 @@ const formatMetric = (value, unit, precision = 1) => {
 };
 
 function App() {
+  // 儲存感測數據、載入狀態與錯誤資訊
   const [readings, setReadings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
+  // 追蹤篩選條件與自訂區間
   const [rangeKey, setRangeKey] = useState('24h');
   const [customRange, setCustomRange] = useState(null);
 
+  // 連線 Firebase 即時資料庫並訂閱資料變化
   useEffect(() => {
     const readingsQuery = query(ref(database), orderByChild('ts'), limitToLast(720));
 
@@ -122,6 +135,7 @@ function App() {
     return () => unsubscribe();
   }, []);
 
+  // 依據選取的時間範圍過濾資料，避免不必要的重新計算
   const filteredReadings = useMemo(() => {
     if (!readings.length) {
       return [];
@@ -155,6 +169,7 @@ function App() {
     return readings.filter((item) => item.timestamp >= startMs && item.timestamp <= endMs);
   }, [readings, rangeKey, customRange]);
 
+  // 加工成圖表專用資料格式，附上時間標籤
   const chartData = useMemo(
     () =>
       filteredReadings.map((item) => ({
@@ -164,11 +179,13 @@ function App() {
     [filteredReadings],
   );
 
+  // 取得最新的單筆資料以及最後更新時間文字
   const latestReading = readings.length ? readings[readings.length - 1] : null;
   const lastUpdatedLabel = lastUpdated
     ? dayjs(lastUpdated).format('YYYY/MM/DD HH:mm:ss')
     : '尚無資料';
 
+  // 處理預設時間區段切換
   const handleRangeKeyChange = (value) => {
     setRangeKey(value);
     if (value !== 'custom') {
@@ -179,6 +196,7 @@ function App() {
     }
   };
 
+  // 處理使用者從日期區間選擇器選取自訂範圍
   const handleCustomRangeChange = (value) => {
     if (!value || !value[0] || !value[1]) {
       setCustomRange(null);
@@ -189,6 +207,7 @@ function App() {
     setRangeKey('custom');
   };
 
+  // 透過 Ant Design 元件組成整體 UI
   return (
     <ConfigProvider
       theme={{
