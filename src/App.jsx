@@ -70,7 +70,11 @@ function App() {
   const [customRange, setCustomRange] = useState(null);
 
   useEffect(() => {
-    const readingsQuery = query(ref(database), orderByChild('ts'), limitToLast(720));
+    const readingsQuery = query(
+      ref(database, 'streams/esp32-01'),
+      orderByChild('ts'),
+      limitToLast(720),
+    );
 
     const unsubscribe = onValue(
       readingsQuery,
