@@ -7,6 +7,7 @@ import {
   DatePicker,
   Empty,
   Layout,
+  Radio,
   Row,
   Segmented,
   Space,
@@ -65,9 +66,9 @@ function App() {
   const [readings, setReadings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [lastUpdated, setLastUpdated] = useState(null);
   const [rangeKey, setRangeKey] = useState('24h');
   const [customRange, setCustomRange] = useState(null);
+  const [mode, setMode] = useState('default');
 
   useEffect(() => {
     const readingsQuery = query(ref(database), orderByChild('ts'), limitToLast(720));
@@ -78,7 +79,6 @@ function App() {
         const value = snapshot.val();
         if (!value) {
           setReadings([]);
-          setLastUpdated(null);
           setLoading(false);
           return;
         }
@@ -109,7 +109,6 @@ function App() {
 
         setReadings(parsed);
         setLoading(false);
-        setLastUpdated(parsed.length ? parsed[parsed.length - 1].timestamp : null);
         setError(null);
       },
       (err) => {
@@ -122,23 +121,46 @@ function App() {
     return () => unsubscribe();
   }, []);
 
+  const activeReadings = useMemo(() => {
+    if (mode === 'mock') {
+      const now = Date.now();
+      const points = 48;
+      const intervalMs = (12 * 60 * 60 * 1000) / points;
+      return Array.from({ length: points }, (_, index) => {
+        const temperatureBase = 24 + Math.sin(index / 6) * 3;
+        const humidityBase = 60 + Math.cos(index / 5) * 10;
+        const uvBase = 4 + Math.sin(index / 8) * 2;
+
+        return {
+          id: `mock-${index}`,
+          temperature: Number((temperatureBase + (Math.random() - 0.5)).toFixed(2)),
+          humidity: Number((humidityBase + (Math.random() - 0.5) * 2).toFixed(2)),
+          uv: Number((uvBase + (Math.random() - 0.5) * 0.6).toFixed(2)),
+          timestamp: now - (points - 1 - index) * intervalMs,
+        };
+      });
+    }
+
+    return readings;
+  }, [mode, readings]);
+
   const filteredReadings = useMemo(() => {
-    if (!readings.length) {
+    if (!activeReadings.length) {
       return [];
     }
 
     if (rangeKey === 'all') {
-      return readings;
+      return activeReadings;
     }
 
     if (rangeKey === 'custom') {
       if (!customRange || !customRange[0] || !customRange[1]) {
-        return readings;
+        return activeReadings;
       }
 
       const startMs = customRange[0].valueOf();
       const endMs = customRange[1].valueOf();
-      return readings.filter((item) => item.timestamp >= startMs && item.timestamp <= endMs);
+      return activeReadings.filter((item) => item.timestamp >= startMs && item.timestamp <= endMs);
     }
 
     const presets = {
@@ -152,8 +174,8 @@ function App() {
     const endMs = Date.now();
     const startMs = dayjs(endMs).subtract(preset.amount, preset.unit).valueOf();
 
-    return readings.filter((item) => item.timestamp >= startMs && item.timestamp <= endMs);
-  }, [readings, rangeKey, customRange]);
+    return activeReadings.filter((item) => item.timestamp >= startMs && item.timestamp <= endMs);
+  }, [activeReadings, rangeKey, customRange]);
 
   const chartData = useMemo(
     () =>
@@ -164,10 +186,14 @@ function App() {
     [filteredReadings],
   );
 
-  const latestReading = readings.length ? readings[readings.length - 1] : null;
-  const lastUpdatedLabel = lastUpdated
-    ? dayjs(lastUpdated).format('YYYY/MM/DD HH:mm:ss')
-    : '尚無資料';
+  const isLoading = mode === 'default' ? loading : false;
+  const latestReading = activeReadings.length ? activeReadings[activeReadings.length - 1] : null;
+  const activeLastUpdated = latestReading?.timestamp ?? null;
+  const lastUpdatedLabel = activeLastUpdated
+    ? dayjs(activeLastUpdated).format('YYYY/MM/DD HH:mm:ss')
+    : mode === 'mock'
+      ? '模擬資料'
+      : '尚無資料';
 
   const handleRangeKeyChange = (value) => {
     setRangeKey(value);
@@ -214,9 +240,22 @@ function App() {
           <Typography.Text className="header-subtitle">
             即時追蹤溫度、濕度與紫外線指數
           </Typography.Text>
-          <Tag icon={<ClockCircleOutlined />} color="geekblue" className="update-tag">
-            最近更新：{lastUpdatedLabel}
-          </Tag>
+          <Space size="middle" align="center" wrap>
+            <Tag icon={<ClockCircleOutlined />} color="geekblue" className="update-tag">
+              最近更新：{lastUpdatedLabel}
+            </Tag>
+            <Tag color={mode === 'default' ? 'blue' : 'orange'}>
+              {mode === 'default' ? '預設模式' : '模擬模式'}
+            </Tag>
+            <Radio.Group
+              optionType="button"
+              value={mode}
+              onChange={(event) => setMode(event.target.value)}
+            >
+              <Radio.Button value="default">預設模式</Radio.Button>
+              <Radio.Button value="mock">模擬模式</Radio.Button>
+            </Radio.Group>
+          </Space>
         </Header>
         <Content className="app-content">
           <Space direction="vertical" size="large" style={{ width: '100%' }}>
@@ -226,7 +265,7 @@ function App() {
 
             <Row gutter={[24, 24]}>
               <Col xs={24} md={8}>
-                <Card className="metric-card" loading={loading} bordered={false}>
+                <Card className="metric-card" loading={isLoading} bordered={false}>
                   <Space align="center" size={18}>
                     <div className="metric-icon temperature">
                       <FireOutlined />
@@ -240,7 +279,7 @@ function App() {
                 </Card>
               </Col>
               <Col xs={24} md={8}>
-                <Card className="metric-card" loading={loading} bordered={false}>
+                <Card className="metric-card" loading={isLoading} bordered={false}>
                   <Space align="center" size={18}>
                     <div className="metric-icon humidity">
                       <CloudOutlined />
@@ -254,7 +293,7 @@ function App() {
                 </Card>
               </Col>
               <Col xs={24} md={8}>
-                <Card className="metric-card" loading={loading} bordered={false}>
+                <Card className="metric-card" loading={isLoading} bordered={false}>
                   <Space align="center" size={18}>
                     <div className="metric-icon uv">
                       <BulbOutlined />
@@ -269,7 +308,7 @@ function App() {
               </Col>
             </Row>
 
-            <Card className="chart-card" bordered={false} loading={loading && !chartData.length}>
+            <Card className="chart-card" bordered={false} loading={isLoading && !chartData.length}>
               <Space direction="vertical" size="middle" style={{ width: '100%' }}>
                 <div className="range-controls">
                   <Segmented
@@ -282,12 +321,12 @@ function App() {
                     allowClear
                     value={rangeKey === 'custom' ? customRange : null}
                     onChange={handleCustomRangeChange}
-                    disabled={!readings.length}
+                    disabled={!activeReadings.length}
                     style={{ minWidth: 260 }}
                   />
                 </div>
 
-                {!chartData.length && !loading ? (
+                {!chartData.length && !isLoading ? (
                   <Empty description="尚無歷史數據" style={{ marginTop: 40 }} />
                 ) : (
                   <div className="chart-wrapper">
