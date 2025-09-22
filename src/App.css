@@ -1,8 +1,10 @@
-﻿.app-layout {
+/* 版面：設定應用程式整體高度與漸層背景 */
+.app-layout {
   min-height: 100vh;
   background: linear-gradient(180deg, #f0f6ff 0%, #ffffff 65%);
 }
 
+/* 標題列：建立儀表板抬頭的漸層與排版 */
 .app-header {
   background: linear-gradient(135deg, #0b60d5 0%, #1677ff 100%);
   padding: 32px 40px;
@@ -15,17 +17,20 @@
   border-bottom-right-radius: 24px;
 }
 
+/* 標題文字：保持白色與去除預設間距 */
 .header-title {
   margin: 0 !important;
   color: #ffffff !important;
 }
 
+/* 副標文字：調整色彩與字級 */
 .header-subtitle {
   margin: 0 !important;
   color: rgba(255, 255, 255, 0.88);
   font-size: 16px;
 }
 
+/* 更新時間標籤：呈現最後更新資訊的膠囊造型 */
 .update-tag {
   align-self: flex-start;
   margin-top: 8px;
@@ -35,6 +40,7 @@
   color: #ffffff !important;
 }
 
+/* 內容區：限制內容寬度並設定內距 */
 .app-content {
   width: 100%;
   max-width: 1200px;
@@ -42,12 +48,14 @@
   padding: 32px 24px 64px;
 }
 
+/* 指標卡片：設定卡片圓角與陰影效果 */
 .metric-card {
   border-radius: 20px !important;
   border: none !important;
   box-shadow: 0 20px 45px rgba(22, 119, 255, 0.12);
 }
 
+/* 指標卡片內部：水平排列圖示與統計資料 */
 .metric-card .ant-card-body {
   display: flex;
   align-items: center;
@@ -55,6 +63,7 @@
   padding: 24px;
 }
 
+/* 指標圖示：統一尺寸、陰影與置中顯示 */
 .metric-icon {
   width: 60px;
   height: 60px;
@@ -67,24 +76,29 @@
   box-shadow: 0 12px 28px rgba(11, 80, 190, 0.22);
 }
 
+/* 圖示配色：溫度專用的暖色漸層 */
 .metric-icon.temperature {
   background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%);
 }
 
+/* 圖示配色：濕度專用的藍色漸層 */
 .metric-icon.humidity {
   background: linear-gradient(135deg, #64b5f6 0%, #1e88e5 100%);
 }
 
+/* 圖示配色：紫外線專用的綠藍漸層 */
 .metric-icon.uv {
   background: linear-gradient(135deg, #1de9b6 0%, #00acc1 100%);
 }
 
+/* 圖表卡片：框線與陰影設計 */
 .chart-card {
   border-radius: 20px !important;
   border: none !important;
   box-shadow: 0 24px 60px rgba(13, 96, 213, 0.15);
 }
 
+/* 圖表卡片內部：垂直堆疊圖表控制與內容 */
 .chart-card .ant-card-body {
   display: flex;
   flex-direction: column;
@@ -93,6 +107,7 @@
   padding: 28px;
 }
 
+/* 篩選區塊：排列時間篩選元件 */
 .range-controls {
   display: flex;
   flex-wrap: wrap;
@@ -101,24 +116,30 @@
   gap: 16px;
 }
 
+/* 圖表容器：限制高度以容納 Recharts */
 .chart-wrapper {
   flex: 1 1 auto;
   min-height: 320px;
 }
 
+/* RWD：小螢幕版面調整 */
 @media (max-width: 768px) {
+  /* 小螢幕：縮減標題列間距 */
   .app-header {
     padding: 24px 20px;
   }
 
+  /* 小螢幕：縮減內容邊距 */
   .app-content {
     padding: 24px 16px 48px;
   }
 
+  /* 小螢幕：確保指標資訊置左排列 */
   .metric-card .ant-card-body {
     justify-content: flex-start;
   }
 
+  /* 小螢幕：改為直向堆疊篩選工具 */
   .range-controls {
     flex-direction: column;
     align-items: stretch;
